@@ -414,13 +414,6 @@ static void cpu_step(cpu_t *cpu, int debug) {
        Lab 5: polish + optional stats
     */
     //lab 2
-    /*case OP_ADDW:
-    check_reg(ra);
-    check_reg(rb);
-    r[rb] = r[rb] + r[ra];
-    zf = (r[rb] == 0);
-    pc += 4;
-    break;*/
     switch(in.op){
         case OP_IRMOVW: {
             check_reg(in.ra);
@@ -497,6 +490,13 @@ static void cpu_step(cpu_t *cpu, int debug) {
         case OP_HALT: {
             cpu->halted = 1;
             break;
+        }
+        case OP_CALL: {
+            target = u16_from_le(in.b2, in.b3);
+            ret = cpu->pc + 4;
+            cpu->sp = cpu->sp - 2;
+            mem_write16(cpu->sp, ret);
+            cpu->pc = target;
         }
     }
     // die("cpu_step not implemented yet. Start with docs/LAB2.md");
