@@ -498,6 +498,12 @@ static void cpu_step(cpu_t *cpu, int debug) {
             mem_write16(cpu->sp, ret);
             cpu->pc = target;
         }
+        case OP_PUSHW: {
+            cpu->sp = cpu->sp - 2;
+            mem_write16(cpu->sp, r[in.ra]);
+            cpu -> cpu->pc += 4;
+
+        }
     }
     // die("cpu_step not implemented yet. Start with docs/LAB2.md");
 }
