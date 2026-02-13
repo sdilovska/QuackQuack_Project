@@ -492,33 +492,31 @@ static void cpu_step(cpu_t *cpu, int debug) {
             break;
         }
         case OP_CALL: {
-            target = u16_from_le(in.b2, in.b3);
-            ret = cpu->pc + 4;
+            uint16_t target = u16_from_le(in.b2, in.b3);
+            uint16_t ret = cpu->pc + 4;
+            
             cpu->sp = cpu->sp - 2;
             mem_write16(cpu->sp, ret);
             cpu->pc = target;
+            break;
         }
-        case OP_PUSHW: {
-            cpu->sp = cpu->sp - 2;
-            mem_write16(cpu->sp, r[in.ra]);
-            cpu -> cpu->pc += 4;
-
         case OP_POPW: {
             cpu->r[in.ra] = mem_read16(cpu->sp);
             cpu->sp = cpu->sp + 2;
             cpu->zf = 0;
             cpu->pc += 4;
+            break;
         }
-
         case OP_RET: {
             cpu->pc = mem_read16(cpu->sp);
             cpu->sp = cpu->sp + 2;
+            break;
         }
-
         case OP_PUSHW: {
             cpu->sp = cpu->sp - 2;
             mem_write16(cpu->sp, cpu->r[in.ra]);
             cpu->pc += 4;
+            break;
         }
     }
     // die("cpu_step not implemented yet. Start with docs/LAB2.md");
