@@ -498,6 +498,18 @@ static void cpu_step(cpu_t *cpu, int debug) {
             cpu->halted = 1;
             break;
         }
+
+        case OP_POPW: {
+            cpu->r[in.ra] = mem_read16(cpu->sp);
+            cpu->sp = cpu->sp + 2;
+            cpu->zf = 0;
+            cpu->pc += 4;
+        }
+
+        case OP_RET: {
+            cpu->pc = mem_read16(cpu->sp);
+            cpu->sp = cpu->sp + 2;
+        }
     }
     // die("cpu_step not implemented yet. Start with docs/LAB2.md");
 }
