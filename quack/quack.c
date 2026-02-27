@@ -543,6 +543,46 @@ static void cpu_step(cpu_t *cpu, int debug) {
             cpu->pc += 4;
             break;
         }
+        case OP_MRMOVB: {
+            check_reg(in.ra);  
+            uint16_t addr = u16_from_le(in.b2, in.b3);
+            uint8_t value;
+            if (addr >= IO_START && addr <= IO_END) {
+                value = io_read8(addr);
+            } else {
+                value = mem_read8(addr);
+            }
+            cpu->r[in.ra] = (uint16_t)value;
+            cpu->pc += 4;
+            break;
+        }
+        case OP_RMMOVB: {
+            uint16_t addr = u16_from_le(in.b2, in.b3);
+            uint8_t low = (uint8_t) cpu->r[in.ra];
+            if (addr >= IO_START && addr <= IO_END){
+                io_write8(addr, low);
+            }
+            else {
+                mem_write8(addr, low);
+            }
+            cpu->pc += 4;
+            break;
+        }
+        case OP_MRMOVBR: {
+            check_reg(in.ra);
+            check_reg(in.b2);
+            uint16_t addr = cpu->r[in.b2];
+            uint8_t value;
+            if (addr >= IO_START && addr <= IO_END){
+                value = io_read8(addr);
+            }
+            else {
+                value = mem_read8(addr);
+            }
+            cpu->r[in.ra] = value;
+            cpu->pc += 4;
+            break;
+        }
     }
     // die("cpu_step not implemented yet. Start with docs/LAB2.md");
 }
