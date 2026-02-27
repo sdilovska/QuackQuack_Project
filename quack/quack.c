@@ -583,10 +583,73 @@ static void cpu_step(cpu_t *cpu, int debug) {
             cpu->pc += 4;
             break;
         }
-    }
-    // die("cpu_step not implemented yet. Start with docs/LAB2.md");
-}
+        case OP_RMMOVBR: {
+            check_reg(in.ra);
+            check_reg(in.b2);
+            uint16_t addr = cpu->r[in.b2];
+            uint8_t value = (uint8_t)(cpu->r[in.ra] & 0xFF);
+            if (addr >= IO_START && addr <= IO_END) {
+                io_write8(addr, value);
+            } 
+            else {
+                mem_write8(addr, value);
+            }
+            cpu->pc += 4;
+            break;
+        }
+        case OP_MRMOVW: {
+            check_reg(in.ra);
+            uint16_t addr = u16_from_le(in.b2, in.b3);
+            uint8_t low;
+            uint8_t high;
+            uint16_t addr_hi = (uint16_t)(addr + 1);
 
+            if (addr >= IO_START && addr <= IO_END) {
+                low = io_read8(addr);
+            } 
+            else {
+                low = mem_read8(addr);
+            }
+
+            if (addr_hi >= IO_START && addr_hi <= IO_END) {
+                high = io_read8(addr_hi);
+            } 
+            else {
+                high = mem_read8(addr_hi);
+            }
+
+            cpu->r[in.ra] = (uint16_t)(low | ((uint16_t)high << 8));
+            cpu->zf = (cpu->r[in.ra] == 0);
+            cpu->pc += 4;
+            break;
+        }
+        case OP_RMMOVW: {
+            check_reg(in.ra);
+            uint16_t addr = u16_from_le(in.b2, in.b3);
+            uint16_t addr_hi = (uint16_t)(addr + 1);
+            uint8_t low = (uint8_t)(cpu->r[in.ra] & 0xFF);
+            uint8_t high = (uint8_t)((cpu->r[in.ra] >> 8) & 0xFF);
+
+            if (addr >= IO_START && addr <= IO_END) {
+                io_write8(addr, low);
+            } 
+            else {
+                mem_write8(addr, low);
+            }
+
+            if (addr_hi >= IO_START && addr_hi <= IO_END) {
+                io_write8(addr_hi, high);
+            } 
+            else {
+                mem_write8(addr_hi, high);
+            }
+
+            cpu->pc += 4;
+            break;
+        }
+    // die("cpu_step not implemented yet. Start with docs/LAB2.md");
+    }
+}
 static void cpu_run(cpu_t *cpu, int debug) {
     while (!cpu->halted) {
         cpu_step(cpu, debug);
