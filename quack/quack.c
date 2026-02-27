@@ -321,13 +321,38 @@ static void io_tick(void) {
 
 /* TODO (Lab 4): implement memory-mapped input reads */
 static uint8_t io_read8(uint16_t addr) {
-    (void)addr;
+    switch (addr) {
+        case IO_TICK:
+            return (uint8_t)(tick_counter & 0xFF);
+        case IO_STATUS:
+            return (uint8_t)(key_available ? 1 : 0);
+        case IO_KEY: {
+            uint8_t k = last_key;
+            key_available = 0;
+            last_key = 0;
+            return k;
+        }
+        default:
+            break;
+    }
+
     return 0;
 }
 
 /* TODO (Lab 4): implement memory-mapped output writes */
 static void io_write8(uint16_t addr, uint8_t v) {
-    (void)addr; (void)v;
+    switch (addr) {
+        case IO_PUTCHAR:
+            putchar(v);
+            fflush(stdout);
+            break;
+        case IO_CLEAR:
+            printf("\033[2J\033[H");
+            fflush(stdout);
+            break;
+        default:
+            break;
+    }
 }
 
 /* =========================
