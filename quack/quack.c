@@ -164,6 +164,12 @@ In Labs 2–4 you implement them inside cpu_step using switch-case.
 #define OP_CALL    0x32
 #define OP_RET     0x33
 
+/* Extra Instructions Lab 5*/
+#define INC_RA     0x12
+#define DEC_RA     0x13
+#define CLR_RA     0x14
+#define OP_OUTC    0x40
+
 /* =========================
    Memory (Lab 1)
    ========================= */
@@ -440,7 +446,7 @@ static void cpu_step(cpu_t *cpu, int debug) {
     */
     //lab 2
     switch(in.op){
-        case OP_IRMOVW: {
+        case OP_IRMOVW: { //Load a 16-bit immediate value in register ra; pc += 4
             check_reg(in.ra);
             uint16_t imm16 = u16_from_le(in.b2, in.b3);
             cpu->r[in.ra] = imm16;
@@ -448,7 +454,7 @@ static void cpu_step(cpu_t *cpu, int debug) {
             cpu->pc+=4;
             break;
         }
-        case OP_RRMOVW: {
+        case OP_RRMOVW: { //Copy the value from register ra into register rb;; pc += 4
             check_reg(in.ra);
             check_reg(in.b2);
             cpu->r[in.b2] = cpu->r[in.ra];
@@ -456,7 +462,7 @@ static void cpu_step(cpu_t *cpu, int debug) {
             cpu->pc+=4;
             break;
         }
-        case OP_IRMOVB: {
+        case OP_IRMOVB: { //Load an 8-bit immediate value into register ra; pc += 4
             check_reg(in.ra);
             uint8_t imm8 = in.b3;
             cpu->r[in.ra] = imm8;
@@ -464,7 +470,7 @@ static void cpu_step(cpu_t *cpu, int debug) {
             cpu->pc+=4;
             break;
         }
-        case OP_ADDW: {
+        case OP_ADDW: { //Add register ra to register rb, store result in rb; pc += 4
             check_reg(in.ra);
             check_reg(in.b2);
             cpu->r[in.b2] = (cpu->r[in.b2] + cpu->r[in.ra]);
@@ -472,7 +478,7 @@ static void cpu_step(cpu_t *cpu, int debug) {
             cpu->pc+=4;
             break;
         }
-        case OP_SUBW: {
+        case OP_SUBW: { //Subtract register ra from register rb, store result in rb; pc += 4
             check_reg(in.ra);
             check_reg(in.b2);
             cpu->r[in.b2] = (cpu->r[in.b2] - cpu->r[in.ra]);
@@ -480,7 +486,7 @@ static void cpu_step(cpu_t *cpu, int debug) {
             cpu->pc+=4;
             break;
         }
-        case OP_CMPW: {
+        case OP_CMPW: { //Compare registers ra and rb; pc += 4
             if(cpu->r[in.ra] == cpu->r[in.b2]){
                 cpu->zf = 1;
             }
@@ -490,11 +496,11 @@ static void cpu_step(cpu_t *cpu, int debug) {
             cpu->pc+=4;
             break;
         }
-        case OP_JMP: {
+        case OP_JMP: { //Jump unconditionally to the target address; pc = target
             cpu->pc = u16_from_le(in.b2, in.b3);
             break;
         }
-        case OP_JE: {
+        case OP_JE: { //Jump to the target address if zf is set, otherwise pc += 4
             if(cpu->zf == 1){
                 cpu->pc = u16_from_le(in.b2, in.b3);
             }
@@ -503,7 +509,7 @@ static void cpu_step(cpu_t *cpu, int debug) {
             }
             break;
         }
-        case OP_JNE: {
+        case OP_JNE: { //Jump to the target address if zf is clear, otherwise pc += 4
             if(cpu->zf == 0){
                 cpu->pc = u16_from_le(in.b2, in.b3);
             }
@@ -512,11 +518,11 @@ static void cpu_step(cpu_t *cpu, int debug) {
             }
             break;
         }
-        case OP_HALT: {
+        case OP_HALT: { //Halt execution; pc stays the same
             cpu->halted = 1;
             break;
         }
-        case OP_CALL: {
+        case OP_CALL: { //Push the return address onto the stack and jump to target address; pc = target
             uint16_t target = u16_from_le(in.b2, in.b3);
             uint16_t ret = cpu->pc + 4;
             
@@ -525,25 +531,25 @@ static void cpu_step(cpu_t *cpu, int debug) {
             cpu->pc = target;
             break;
         }
-        case OP_POPW: {
+        case OP_POPW: { //Pop a 16-bit value from the stack into register ra; pc += 4
             cpu->r[in.ra] = mem_read16(cpu->sp);
             cpu->sp = cpu->sp + 2;
             cpu->zf = 0;
             cpu->pc += 4;
             break;
         }
-        case OP_RET: {
+        case OP_RET: { //Pop the return address from the stack and jump to it; pc = popped address
             cpu->pc = mem_read16(cpu->sp);
             cpu->sp = cpu->sp + 2;
             break;
         }
-        case OP_PUSHW: {
+        case OP_PUSHW: { //Push the value of register ra onto the stack; pc += 4
             cpu->sp = cpu->sp - 2;
             mem_write16(cpu->sp, cpu->r[in.ra]);
             cpu->pc += 4;
             break;
         }
-        case OP_MRMOVB: {
+        case OP_MRMOVB: { //Load 1 byte from memory or I/O into register ra; pc += 4
             check_reg(in.ra);  
             uint16_t addr = u16_from_le(in.b2, in.b3);
             uint8_t value;
@@ -556,7 +562,7 @@ static void cpu_step(cpu_t *cpu, int debug) {
             cpu->pc += 4;
             break;
         }
-        case OP_RMMOVB: {
+        case OP_RMMOVB: { //Store the low byte of register ra into memory or I/O; pc += 4
             uint16_t addr = u16_from_le(in.b2, in.b3);
             uint8_t low = (uint8_t) cpu->r[in.ra];
             if (addr >= IO_START && addr <= IO_END){
@@ -568,7 +574,7 @@ static void cpu_step(cpu_t *cpu, int debug) {
             cpu->pc += 4;
             break;
         }
-        case OP_MRMOVBR: {
+        case OP_MRMOVBR: { //Load 1 byte from the address in register rb into register ra; pc += 4
             check_reg(in.ra);
             check_reg(in.b2);
             uint16_t addr = cpu->r[in.b2];
@@ -583,7 +589,7 @@ static void cpu_step(cpu_t *cpu, int debug) {
             cpu->pc += 4;
             break;
         }
-        case OP_RMMOVBR: {
+        case OP_RMMOVBR: { //Store the low byte of register ra to the address in register rb; pc += 4
             check_reg(in.ra);
             check_reg(in.b2);
             uint16_t addr = cpu->r[in.b2];
@@ -597,7 +603,7 @@ static void cpu_step(cpu_t *cpu, int debug) {
             cpu->pc += 4;
             break;
         }
-        case OP_MRMOVW: {
+        case OP_MRMOVW: { //Load a 16-bit word from memory or I/O into register ra; pc += 4
             check_reg(in.ra);
             uint16_t addr = u16_from_le(in.b2, in.b3);
             uint8_t low;
@@ -623,7 +629,7 @@ static void cpu_step(cpu_t *cpu, int debug) {
             cpu->pc += 4;
             break;
         }
-        case OP_RMMOVW: {
+        case OP_RMMOVW: { //Store a 16-bit word from register ra into memory or I/O; pc += 4
             check_reg(in.ra);
             uint16_t addr = u16_from_le(in.b2, in.b3);
             uint16_t addr_hi = (uint16_t)(addr + 1);
@@ -644,6 +650,33 @@ static void cpu_step(cpu_t *cpu, int debug) {
                 mem_write8(addr_hi, high);
             }
 
+            cpu->pc += 4;
+            break;
+        }
+        case INC_RA: { //Increase register ra by 1; pc += 4
+            check_reg(in.ra);
+            cpu->r[in.ra] += 1;
+            cpu->zf = (cpu->r[in.ra] == 0);
+            cpu->pc += 4;
+            break;
+        }
+        case DEC_RA: { //Decrease register ra by 1; pc += 4
+            check_reg(in.ra);
+            cpu->r[in.ra] -= 1;
+            cpu->zf = (cpu->r[in.ra] == 0);
+            cpu->pc += 4;
+            break;
+        }
+        case CLR_RA: { //Clear register ra; pc += 4
+            check_reg(in.ra);
+            cpu->r[in.ra] = 0;
+            cpu->zf = 1;
+            cpu-> pc += 4;
+            break;
+        }
+        case OP_OUTC: { //Output register ra as a character; pc += 4
+            check_reg(in.ra);
+            io_write8(IO_PUTCHAR, (uint8_t)(cpu->r[in.ra] & 0xFF));
             cpu->pc += 4;
             break;
         }
